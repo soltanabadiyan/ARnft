@@ -40,20 +40,25 @@ import { CameraViewRenderer } from "./renderers/CameraViewRenderer";
 import { getConfig } from "./utils/ARUtils";
 import NFTWorker from './NFTWorker'
 import { v4 as uuidv4 } from 'uuid'
+import { TypedEmitter } from 'tiny-typed-emitter';
 import packageJson from '../package.json'
 const { version } = packageJson
+export interface nftEvents {
+    'initARnft': () => void;
+}
 
 interface Entity {
     name: string, 
     markerUrl: string
 }
-export default class ARnft {
+
+export default class ARnft extends TypedEmitter<nftEvents>{
     public cameraView: CameraViewRenderer;
     public appData: ConfigData;
     public width: number;
     public height: number;
     public configUrl: string;
-    public listeners:  object;
+    // public listeners: object;
     public markerUrl: string;
     public camData: string;
     private controllers: NFTWorker[];
@@ -71,11 +76,12 @@ export default class ARnft {
      * @param height (number) the height in pixels of the video camera.
      * @param configUrl (string) the url of the config.json file
      */
-    constructor(width: number, height: number, configUrl: string){
+    constructor(width: number, height: number, configUrl: string){    
+        super()
         this.width = width
         this.height = height
         this.configUrl = configUrl;
-        this.listeners = {};
+        // this.listeners = {};
         this.uuid = uuidv4();
         this.version = version;
         console.log('ARnft ', this.version);
@@ -98,7 +104,7 @@ export default class ARnft {
         return await _arnft._initialize(markerUrls, names, stats).catch((error: any) => {
             console.error(error);
             return Promise.reject(false);
-        })
+        })   
     }
 
     /**
@@ -135,8 +141,12 @@ export default class ARnft {
      */
 
     private async _initialize(markerUrls: Array<string>, names: Array<string>, stats: boolean): Promise<object> {
-        var event = new Event("initARnft");
-        document.dispatchEvent(event);
+        //var event = new Event("initARnft");
+        //this.dispatchEvent({name: 'initARnft', target:'document'});
+        this.on('initARnft', () => {
+            console.log('initARnft!');  
+        })
+        this.emit('initARnft')
         console.log('ARnft init() %cstart...', 'color: yellow; background-color: blue; border-radius: 4px; padding: 2px');
         getConfig(this.configUrl);
         document.addEventListener('getConfig', async (ev: any) => {
@@ -186,7 +196,6 @@ export default class ARnft {
             requestAnimationFrame(update);
             }
             update()
-            
         })
     })
         return Promise.resolve(this)
@@ -196,9 +205,9 @@ export default class ARnft {
      * Used only by the ARnft functions.
      * @returns 
      */
-    private converter(): any {
+    /*private converter(): any {
         return this;
-      }
+      }*/
 
     public static getEntities() {
         return this.entities;
@@ -208,14 +217,14 @@ export default class ARnft {
      * Dispatch an event from the ARnft instance.
      * @param event set the event to dispatch.
      */
-    public dispatchEvent(event: { name: string; target: any; data?: object }) {
+    /*public dispatchEvent(event: { name: string; target: any; data?: object }) {
         let listeners = this.converter().listeners[event.name];
         if(listeners) {
             for(let i = 0; i < listeners.length; i++) {
                 listeners[i].call(this, event);
             }
         }
-      };
+      };*/
     
     /**
      * Add an event listener to the ARnft instance. Choose the name
@@ -223,12 +232,12 @@ export default class ARnft {
      * @param name the name of the event to listen.
      * @param callback callback function.
      */
-    public addEventListener(name: string, callback: object) {
+    /*public addEventListener(name: string, callback: object) {
         if(!this.converter().listeners[name]) {
             this.converter().listeners[name] = [];
         }
         this.converter().listeners[name].push(callback);
-      };
+      };*/
     
     /**
      * Remove an event listener from the ARnft instance. Choose the name
@@ -236,14 +245,14 @@ export default class ARnft {
      * @param name name of the event to remove.
      * @param callback callback function.
      */
-    public removeEventListener(name: string, callback: object) {
+    /*public removeEventListener(name: string, callback: object) {
         if(this.converter().listeners[name]) {
             let index = this.converter().listeners[name].indexOf(callback);
             if(index > -1) {
                 this.converter().listeners[name].splice(index, 1);
           }
         }
-      };
+      };*/
     
     /**
      * Dispose the Video stream and the NFTWorker.

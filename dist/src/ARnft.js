@@ -4,14 +4,15 @@ import { CameraViewRenderer } from "./renderers/CameraViewRenderer";
 import { getConfig } from "./utils/ARUtils";
 import NFTWorker from './NFTWorker';
 import { v4 as uuidv4 } from 'uuid';
+import { TypedEmitter } from 'tiny-typed-emitter';
 import packageJson from '../package.json';
 const { version } = packageJson;
-export default class ARnft {
+export default class ARnft extends TypedEmitter {
     constructor(width, height, configUrl) {
+        super();
         this.width = width;
         this.height = height;
         this.configUrl = configUrl;
-        this.listeners = {};
         this.uuid = uuidv4();
         this.version = version;
         console.log('ARnft ', this.version);
@@ -34,8 +35,10 @@ export default class ARnft {
         });
     }
     async _initialize(markerUrls, names, stats) {
-        var event = new Event("initARnft");
-        document.dispatchEvent(event);
+        this.on('initARnft', () => {
+            console.log('initARnft!');
+        });
+        this.emit('initARnft');
         console.log('ARnft init() %cstart...', 'color: yellow; background-color: blue; border-radius: 4px; padding: 2px');
         getConfig(this.configUrl);
         document.addEventListener('getConfig', async (ev) => {
@@ -79,37 +82,9 @@ export default class ARnft {
         });
         return Promise.resolve(this);
     }
-    converter() {
-        return this;
-    }
     static getEntities() {
         return this.entities;
     }
-    dispatchEvent(event) {
-        let listeners = this.converter().listeners[event.name];
-        if (listeners) {
-            for (let i = 0; i < listeners.length; i++) {
-                listeners[i].call(this, event);
-            }
-        }
-    }
-    ;
-    addEventListener(name, callback) {
-        if (!this.converter().listeners[name]) {
-            this.converter().listeners[name] = [];
-        }
-        this.converter().listeners[name].push(callback);
-    }
-    ;
-    removeEventListener(name, callback) {
-        if (this.converter().listeners[name]) {
-            let index = this.converter().listeners[name].indexOf(callback);
-            if (index > -1) {
-                this.converter().listeners[name].splice(index, 1);
-            }
-        }
-    }
-    ;
     dispose() {
         this.disposeVideoStream();
         this.disposeNFT();
