@@ -79,6 +79,15 @@ export default class ARnft {
             markerUrls.forEach((markerUrl, index) => {
                 this.controllers.push(new NFTWorker(markerUrl, this.width, this.height, this.uuid, names[index]));
                 this.controllers[index].initialize(this.appData.cameraPara, renderUpdate, trackUpdate);
+                const image = this.cameraView.image;
+                this.controllers[index].process(image, this.cameraView.frame);
+                let _update = () => {
+                    if (this.initialized && this.autoUpdate) {
+                        this.controllers[index].process(image, this.cameraView.frame);
+                        requestAnimationFrame(_update);
+                    }
+                };
+                _update();
             });
             this.initialized = true;
         }).catch(function (error) {
@@ -92,14 +101,6 @@ export default class ARnft {
                 this.target.dispatchEvent(new CustomEvent("ARnftIsReady"));
             }
         });
-        let _update = () => {
-            if (this.initialized && this.autoUpdate) {
-                const image = this.cameraView.image;
-                this.controllers.forEach((controller) => controller.process(image, this.cameraView.frame));
-            }
-            requestAnimationFrame(_update);
-        };
-        _update();
         return this;
     }
     update() {
